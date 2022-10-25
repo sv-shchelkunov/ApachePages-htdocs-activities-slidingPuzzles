@@ -32,15 +32,14 @@ click **Left Mouse** on the tile, or on mobile devices **touch** the tile
 3. You can change your choice by clicking another tile:
 ![clicking on the 6<sup>th</sup> tile](/images/click_LeftMouse.png)
 
-4. clicking on/touching the empty square to have the selected tile jump there,
-will do that:
-  4a. when you move the mouse, the tile color will change (_you see this only when you use a desktop/laptop_):
-  ![clicking on the empty square](/images/click_EmptySquare.png)
-  4b. when you click, or touch, the tile jumps:
-  ![the tile jumps](/images/tile_jumps.png)
+4. when you move the mouse, the tile color will change (_you see this only when you use a desktop/laptop_):
+![clicking on the empty square](/images/click_EmptySquare.png)
 
-5. This is how a new puzzle may look like:
+5. when you click or touch the empty square, the tile jumps:
+![the tile jumps](/images/tile_jumps.png)
+
+6. This is how a new puzzle may look like:
 ![new, fresh puzzle](/images/puzzle_4by4.png)
 
-6. and this is an example of the completed puzzle:
+7. and this is an example of the completed puzzle:
 ![completed puzzle](/images/puzzle_4by4_completed.png)
