@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <title>SHCH, NxN Sliding Puzzle</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8">
+
+  <meta name="description" content="NxN Sliding Puzzle">
+  <meta name="author" content="SHCH">
+  <meta name="keywords" content="Game, Games, Sliding Puzzle, NxN">
+
+  <style media="screen"  id="shch">
+
+    :root {
+      --user-scale: 1;
+      --user-scale-max: 2;
+      --user-scale-min: 0.2;
+      --screen-scale: 1;/* it changes, when the screen size changes */
+      --board-scale: calc(var(--user-scale) * var(--screen-scale));
+
+      --board-genus: 4;/* the number of tiles horizontally and/or vertically. Nx=Ny=N (square board) */
+      --board-genus-max: 14;/* sets the upper limit */
+      --board-genus-min: 3;/* sets the lower limit */
+
+      --gmtr-qubit: 50px;/* changes depending on --board-genus. It determines the value of  --cntnt-size */
+      --lttr-qubit: 23px;/* dictates the value of fonts, aka letter-size, when needed */
+
+      --cntnt-size: calc(var(--gmtr-qubit) * var(--board-scale));
+      --lttr-size: calc(var(--lttr-qubit) * var(--board-scale));
+
+      --box-size: calc(var(--cntnt-size) * 3);
+      --gap-size: calc(var(--cntnt-size) * 0.25);
+      --font-size-primero: var(--cntnt-size);
+      --font-size-segundo: var(--lttr-size);
+
+      --board-color: #2196F3;/* background-color */
+      --tile-color-primero: rgba(255, 255, 255, 0.75);/* background-color */
+      --tile-color-segundo: rgba(255, 255, 255, 0.15);/* background-color */
+      --tile-color-tercero: olive;/* background-color */
+      --tile-color-cuarto: rgb(51, 71, 26, 0.375);/* background-color */
+
+      --panel-color-primero: #04aa6d;/* background-color */
+      --panel-color-segundo: #3e8e41;/* background-color */
+      --panel-color-tercero: white;/* background-color */
+      --panel-color-cuarto: black;/* background-color */
+      --switch-color-txt-primero: black;/* text-color */
+      --switch-color-txt-segundo: yellow;/* text-color */
+      --switch-color-txt-tercero: white;/* text-color */
+
+      --modal-color-primero: #474e5d;/* background-color */
+      --modal-color-segundo: #fefefe;/* background-color */
+      --modal-border-color:  #888;
+      --modal-ok-color: #f44336;/* background-color */
+      --modal-ok-color-txt: white;/* text-color -txt*/
+      --modal-yes-color: #104f42;/* background-color */
+      --modal-yes-color-txt: white;/* text-color -txt*/
+      /* --modal-no-color: #ccc;/* background-color */
+      /* --modal-no-color-txt: black; */ /* text-color */
+      --modal-panel-color: #4f311d;/* background-color */
+      --modal-panel-border-stl: dashed;
+      --modal-panel-border-r: .313em;
+
+      --user-help-color: navy;/* background-color */
+      --user-help-color-txt: white;/* text-color */
+    }
+    @media (max-width: 760px) {
+      :root {
+        --screen-scale: 0.9;/* it changes, when the screen size changes */
+      }
+    }
+    @media (max-width: 670px) {
+      :root {
+        --screen-scale: 0.8;/* it changes, when the screen size changes */
+      }
+    }
+    @media (max-width: 580px) {
+      :root {
+        --screen-scale: 0.7;/* it changes, when the screen size changes */
+      }
+    }
+    @media (max-width: 510px) {
+      :root {
+        --screen-scale: 0.6;/* it changes, when the screen size changes */
+      }
+    }
+    @media (max-width: 435px) {
+      :root {
+        --screen-scale: 0.5;/* it changes, when the screen size changes */
+      }
+    }
+    @media (max-width: 365px) {
+      :root {
+        --screen-scale: 0.4;/* it changes, when the screen size changes */
+      }
+    }
+    @media (max-width: 295px) {
+      :root {
+        --screen-scale: 0.3;/* it changes, when the screen size changes */
+      }
+    }
+    @media (max-width: 220px) {
+      :root {
+        --screen-scale: 0.2;/* it changes, when the screen size changes */
+      }
+    }
+  </style>
+
+  <style media="screen" id="shch_body">
+    * {
+      box-sizing: content-box;
+      padding: 0;
+      border: 0;
+      margin: 0;
+    }
+
+    .board {
+      background-color: var(--board-color);
+
+      width: fit-content;/* shrinks this div horizontally to be of a finite width */
+      height: fit-content;
+
+      padding: var(--gap-size);
+      margin: auto;/* centers this div */
+
+      display: grid;
+      grid-gap: var(--gap-size);
+    }
+    .board-3x3 {
+      grid: var(--box-size) / var(--box-size) var(--box-size) var(--box-size);
+    }
+    .board-4x4 {
+      grid: var(--box-size) / var(--box-size) var(--box-size) var(--box-size) var(--box-size);
+    }
+    .board-5x5 {
+      grid: var(--box-size) / var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size);
+    }
+    .board-6x6 {
+      grid: var(--box-size) / var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size);
+    }
+    .board-7x7 {
+      grid: var(--box-size) / var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size);
+    }
+    .board-8x8 {
+      grid: var(--box-size) / var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size);
+    }
+    .board-9x9 {
+      grid: var(--box-size) / var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size);
+    }
+    .board-10x10 {
+      grid: var(--box-size) / var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size);
+    }
+    .board-11x11 {
+      grid: var(--box-size) / var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size);
+    }
+    .board-12x12 {
+      grid: var(--box-size) / var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size);
+    }
+    .board-13x13 {
+      grid: var(--box-size) / var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size);
+    }
+    .board-14x14 {
+      grid: var(--box-size) / var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size) var(--box-size);
+    }
+
+    .tile-frame {
+      background-color: var(--tile-color-primero);
+
+      font-size: var(--font-size-primero);
+      text-align: center;
+    }
+    .tile {
+      background-color: var(--tile-color-segundo);
+      line-height: var(--cntnt-size);
+
+      height: var(--cntnt-size);
+      padding: var(--cntnt-size) 0;
+
+      clip-path: circle(50%);
+    }
+    .tile[draggable='true']:hover, .tile[clickable='true']:hover {
+      background-color: var(--tile-color-tercero);
+    }
+    .tile[draggable='true']:hover {
+      cursor: grab;
+    }
+    .tile[clickable='true']:hover {
+      cursor: pointer;
+    }
+    .tile[marked='true'] {
+      background-color: var(--tile-color-cuarto);
+    }
+  </style>
+
+  <style media="screen" id="shch_menu">
+    .cntrl-panel, .mvs-cntr-panel, .time-panel {
+      background-color: var(--panel-color-primero);
+      font-size: var(--font-size-segundo);
+      list-style-type: none;
+
+      padding: .5em;
+      margin-top: .5em;
+      margin-right: auto;
+      margin-bottom: .5em;
+      margin-left: auto;
+
+      display: flex;
+      width: fit-content;
+    }
+    .cntrl-panel:hover {
+      background-color: var(--panel-color-segundo);
+    }
+    .cntrl-panel li, .mvs-cntr-unit, .time-unit {
+      background-color: var(--panel-color-tercero);
+      text-align: center;
+
+      padding: .25em;
+      margin-right: .5em;
+      margin-left: .5em;
+
+      display: inline-block;
+      min-width: 3.25em;
+    }
+    .cntrl-panel .cntrl-switch {
+      color: var(--switch-color-txt-primero);
+      text-decoration: none;
+
+      display: block;
+      width: auto;
+    }
+    .cntrl-panel .cntrl-switch:hover {
+      background-color: var(--panel-color-cuarto);
+      color: var(--switch-color-txt-segundo);
+
+      cursor: pointer;
+    }
+    .cntrl-block-board {
+      background-color: var(--panel-color-segundo);
+
+      display: none;
+      z-index: 1;
+    }
+    .cntrl-block:hover .cntrl-block-board {
+      text-align: left;
+
+      padding-top: .5em;
+      padding-right: 1em;
+      padding-left: 1em;
+
+      margin-top: 0.25em;
+      margin-left: -0.25em;
+
+      display: block;
+      min-width: 5.25em;
+      position: absolute;
+    }
+    .cntrl-block-board .cntrl-switch {
+      color: var(--switch-color-txt-tercero);
+      margin-top: 0.188em;
+      margin-bottom: 0.563em;
+    }
+  </style>
+
+  <style media="screen" id="shch_modal">
+    .modal {
+      background-color: var(--modal-color-primero);
+      overflow: auto;
+
+      padding-top: 1%;
+
+      display: none;
+      z-index: 1;
+      width: 100%;
+      height: 100%;
+      position: fixed;
+      left: 0;
+      top: 0;
+    }
+    .modal>div {
+      background-color: var(--modal-color-segundo);
+      font-size: var(--font-size-segundo);
+      text-align: center;
+
+      padding: 1em;
+      border: 0.375em solid var(--modal-border-color);
+      margin: 5% auto 15% auto;
+
+      width: 70%;
+    }
+    .modal>div p:first-of-type {
+      margin-bottom: 5%;
+    }
+    .modal dl {
+      text-align: left;
+    }
+    .modal dt {
+      margin-top: 1em;
+    }
+    .modal dd {
+      margin-top: 0.25em;
+      margin-left: 2.25em;
+    }
+    .modal dt>span {
+      background-color: var(--user-help-color);
+      color: var(--user-help-color-txt);
+    }
+
+    .modal-button {
+      font-size: inherit;
+      opacity: 0.9;
+
+      padding: 0.875em 1.25em;
+      border: none;
+      margin: 0.5em 0;
+
+      box-sizing: border-box;
+      width: 100%;/* if two buttons, change to 50%. If 3 buttons, change to 33.333%, etc. */
+      float: left;
+
+      cursor: pointer;
+    }
+    .modal-ok-button {
+      background-color: var(--modal-ok-color);
+      color: var(--modal-ok-color-txt);
+    }
+    /* .modal-no-button {
+      background-color: var(--modal-no-color-primero);
+      color: var(--modal-no-color);
+    } */
+    .modal-yes-button {
+      background-color: var(--modal-yes-color);
+      color: var(--modal-yes-color-txt);
+    }
+
+    .mvs-cntr-panel, .time-panel {
+      background-color: var(--modal-panel-color);
+
+      padding: 0.094em 0;
+      border: 0.188em var(--modal-panel-color) var(--modal-panel-border-stl);
+      border-radius: var(--modal-panel-border-r);
+      outline: 0.188em var(--modal-panel-color) var(--modal-panel-border-stl);
+    }
+    .mvs-cntr-unit, .time-unit {
+      margin-right: 0.125em;
+      margin-left: 0.125em;
+    }
+
+  </style>
+
+  <script type="text/javascript">
+    const SHOW =  false;//true;// used by fLog(...)
+
+    const SEP = '-';
+    const TRUE = "true";
+    const FALSE = "false";
+
+    const WHEN_ = '.when_';
+    const DRAGGABLE = 'draggable';
+    const CLICKABLE = 'clickable';
+    const IS_Draggable = false;//true;
+    const IS_Clickable = true;//false;
+
+    const user_scale_max = [];
+    const user_scale_min = [];
+
+    const board_genus_max = [];
+    const board_genus_min = [];
+    const board_genus = [];
+    const gmtr_qubit = [];
+
+    var board_classes;
+    var is_board_completed;
+
+    const TILE_ = "tile_";
+    var tiles;
+    var tiles_values;
+    var tiles_x_count;
+    var tiles_y_count;
+    var tiles_count;
+
+    const TILE_FRAME_ = "tile_frame_";
+    var empty_tile_frame_id;
+    const draggable_info = {};
+    const clickable_info = {};
+
+    var user_result;
+    var user_help;// 'display'
+    const modal_classes = ['mvs-cntr-panel', 'mvs-cntr-unit', 'time-panel', 'time-unit']
+    var time_buttler;
+    var moves_counter;
+
+    const TimeButtler = class {
+      #time_ids; #time_text; #sep; #time;
+      #SEC; #MIN; #HR; #DAY;
+      constructor() {
+
+        this.#time_ids = ['days_', 'hrs_', 'mins_', 'secs_'];
+        this.#time_text = ['days: ', 'hrs: ', 'mins: ', 'secs: '];
+        this.#sep = SEP;
+
+        this.#SEC = 1000;// 1000 msec
+        this.#MIN = 60*this.#SEC;
+        this.#HR = 60*this.#MIN;
+        this.#DAY = 24*this.#HR;
+
+        this.#time = (new Date()).getTime();
+        // end of constructor(...)
+      };
+      serve = function() {
+
+        const _dt = (new Date()).getTime() - this.#time;
+        const _days = Math.floor(_dt/this.#DAY);
+        const _hrs = Math.floor((_dt%this.#DAY)/this.#HR);
+        const _mins = Math.floor((_dt%this.#HR)/this.#MIN);
+        const _secs = Math.floor((_dt%this.#MIN)/this.#SEC);
+        return _days.toString() +this.#sep+ _hrs.toString() +this.#sep+ _mins.toString() +this.#sep+ _secs.toString();
+        // end of function serve(...)
+      };
+      serveFormatted = function(arg_PanelClass, arg_UnitClass) {
+
+        const _time = this.serve().split(this.#sep);
+
+        const _ulEncapsulator = document.createElement('ul');// time panel
+        _ulEncapsulator.classList.add(arg_PanelClass);
+
+        _time.forEach(($_TimeUnit, $_TimeUnitIndex) => {
+          const _liEncapsulator = document.createElement('li');
+          _liEncapsulator.classList.add(arg_UnitClass);
+
+          _liEncapsulator.id = this.#time_ids[$_TimeUnitIndex] +this.#sep+ $_TimeUnit;
+          let _textNode = document.createTextNode(this.#time_text[$_TimeUnitIndex] + $_TimeUnit);
+          _liEncapsulator.appendChild(_textNode);
+
+          _ulEncapsulator.appendChild(_liEncapsulator);
+        });// end of forEach
+
+        return _ulEncapsulator;
+        // end of function serveFormatted(...)
+      };
+      // end of class TimeButtler(...)
+    };
+    const MovesCounter = class {
+      #id; #text; #sep; #moves_count;
+      constructor(arg_Random) {
+
+        this.#id = 'moves_count_';
+        this.#text = 'number of moves made: ';
+        this.#sep = SEP;
+
+        this.#moves_count = arg_Random? 0 : (-1);
+        // end of constructor(...)
+      };
+      incCounter = function() {
+
+        this.#moves_count = this.#moves_count + 1;
+      };
+      serve = function() {
+
+        return this.#moves_count.toString();
+        // end of function serve(...)
+      };
+      serveFormatted = function(arg_PanelClass, arg_UnitClass) {
+
+        const _movesCount = this.serve();
+
+        const _ulEncapsulator = document.createElement('ul');// moves-count panel
+        _ulEncapsulator.classList.add(arg_PanelClass);
+
+        const _liEncapsulator = document.createElement('li');
+        _liEncapsulator.classList.add(arg_UnitClass);
+
+        _liEncapsulator.id = this.#id +this.#sep+ _movesCount;
+        let _textNode = document.createTextNode(this.#text + _movesCount);
+        _liEncapsulator.appendChild(_textNode);
+
+        _ulEncapsulator.appendChild(_liEncapsulator);
+        return _ulEncapsulator;
+        // end of function serveFormatted(...)
+      };
+      // end of class MovesCounter(...)
+    };
+
+    const fLog = (arg_Obj)=> {
+
+      if (SHOW === true) { console.log(arg_Obj); };
+    };
+
+    const fOnBodyLoad = ()=> {
+
+      const _root = document.querySelector(':root');
+      const _rootCSS = getComputedStyle(_root);
+      user_scale_max[0] = Number(_rootCSS.getPropertyValue('--user-scale-max'));
+      user_scale_min[0] = Number(_rootCSS.getPropertyValue('--user-scale-min'));
+      board_genus_max[0] = Number(_rootCSS.getPropertyValue('--board-genus-max'));
+      board_genus_min[0] = Number(_rootCSS.getPropertyValue('--board-genus-min'));
+      board_genus[0] = Number(_rootCSS.getPropertyValue('--board-genus'));
+      gmtr_qubit[0] = Number(_rootCSS.getPropertyValue('--gmtr-qubit').replace(/[px]/gm,''));
+
+      document.onselectstart = ()=> { return false ; };
+
+      let _when;
+      if(!IS_Draggable){ _when = WHEN_ + DRAGGABLE; };
+      if(!IS_Clickable){ _when = WHEN_ + CLICKABLE; };
+      document.querySelectorAll(_when).forEach(($_Eleme) => {
+        $_Eleme.style.display = 'none';
+      });
+
+      user_result = document.getElementById('user_result');// 'display'
+      user_help = document.getElementById('user_help');// 'display'
+      document.querySelectorAll('.modal-button').forEach(($_Button) => {
+        $_Button.addEventListener('click', ()=> {
+          user_result.style.display = 'none';
+          user_help.style.display = 'none';
+        });
+        // end of forEach
+      });
+      document.querySelector('.modal-yes-button').addEventListener('click', ()=> fActivateBoard(false));
+
+      document.getElementById('user_help_').addEventListener('click', ()=> { user_help.style.display = 'block'; });
+      document.querySelectorAll('.cntrl-switch').forEach(($_Switch) => {
+        fChangeBoard($_Switch, Number($_Switch.id.split(SEP)[1]));
+        // end of forEach
+      });
+      document.querySelectorAll('.user-scale').forEach(($_Switch) => {
+        const _res = $_Switch.id.split(SEP);
+        fChangeUserScale($_Switch, _res[1], Number(_res[2]));
+        // end of forEach
+      });
+
+      fActivateBoard(true);
+      // end of function fOnBodyLoad(...)
+    };
+
+    const fDragStart = (arg_Event)=> {
+
+      if (!IS_Draggable) return;
+
+      arg_Event.dataTransfer.setData("text", '');// for mobile devs to work
+      draggable_info[TILE_] = arg_Event.target.id;
+      draggable_info[TILE_FRAME_] = arg_Event.target.parentNode.id;
+      // end of function fDragStart(...)
+    };
+    const fDragOver = (arg_Event)=> {
+
+      if (!IS_Draggable) return;
+
+      if (arg_Event.target.firstChild) { return; };
+
+      arg_Event.preventDefault();
+      // end of function fDragOver(...)
+    };
+    const fDrop = (arg_Event)=> {
+
+      if (!IS_Draggable) return;
+
+      if (arg_Event.target.firstChild) { return; };
+
+      arg_Event.preventDefault();
+
+      arg_Event.dataTransfer.dropEffect = 'move';
+      arg_Event.target.appendChild(document.getElementById(draggable_info[TILE_]));
+
+      empty_tile_frame_id = draggable_info[TILE_FRAME_];
+      tiles.forEach(($_Tile, $_Index) => {
+        is_board_completed[$_Index] = fEvaluate($_Tile);
+      });
+      moves_counter.incCounter();
+      fIsBoardCompleted();
+      // end of function fDrop(...)
+    };
+
+    const fTileClick = (arg_Event)=> {
+
+      if (!IS_Clickable) return;
+      if (arg_Event.target.getAttribute('clickable') === FALSE) return;
+
+      if(clickable_info[TILE_]) {
+        document.getElementById(clickable_info[TILE_]).setAttribute('marked', FALSE);
+      };
+      arg_Event.target.setAttribute('marked', TRUE);
+
+      clickable_info[TILE_] = arg_Event.target.id;
+      clickable_info[TILE_FRAME_] = arg_Event.target.parentNode.id;
+      // end of fTileClick(...)
+    };
+    const fTileFrameClick = (arg_Event)=> {
+
+      if (!IS_Clickable) return;
+
+      if (arg_Event.target.firstChild) { return; };
+
+      if (clickable_info[TILE_]) {
+
+        arg_Event.preventDefault();
+
+        let _tile = document.getElementById(clickable_info[TILE_]);
+        arg_Event.target.appendChild(_tile);
+        _tile.setAttribute('marked', FALSE);
+        clickable_info[TILE_] = null;
+
+        empty_tile_frame_id = clickable_info[TILE_FRAME_];
+        tiles.forEach(($_Tile, $_Index) => {
+          is_board_completed[$_Index] = fEvaluate($_Tile);
+        });
+        moves_counter.incCounter();
+        fIsBoardCompleted();
+      };
+      // end of function fTileFrameClick(...)
+    };
+
+    const fAddBoardClass = (arg_Board, arg_ClassName)=> {
+
+      arg_Board.classList.add(arg_ClassName);
+      if (!board_classes) { board_classes = []; };
+      board_classes.push(arg_ClassName);
+    };
+    const fRemoveBoardSecondaryClasses = (arg_Board)=> {
+
+      if (!board_classes) { return; };
+
+      board_classes.forEach(($_Class) => {
+        arg_Board.classList.remove($_Class);
+      });
+      board_classes = null;
+    };
+    const fProcessBoardGenus =()=> {
+
+      _root = document.querySelector(':root');
+      _rootCSS = getComputedStyle(_root);
+      _boardGenus = Number(_rootCSS.getPropertyValue('--board-genus'));
+      if ((_boardGenus < board_genus_min[0]) || (_boardGenus > board_genus_max[0])) { _boardGenus = board_genus[0]; };
+
+      tiles_x_count = _boardGenus;
+      tiles_y_count = _boardGenus;
+      tiles_count = tiles_x_count * tiles_y_count;
+      empty_tile_frame_id = TILE_FRAME_ +SEP+ (tiles_x_count - 1).toString() +SEP+ (tiles_y_count - 1).toString();
+
+      const _board = document.getElementsByClassName('board')[0];
+      _board.innerHTML = '';
+      fRemoveBoardSecondaryClasses(_board);
+      fAddBoardClass(_board, 'board-' + _boardGenus.toString() +'x'+ _boardGenus.toString());
+
+      _scaleGmtrQubit = board_genus[0]/_boardGenus;
+      _root.style.setProperty('--gmtr-qubit', (gmtr_qubit[0] * _scaleGmtrQubit).toString() + 'px');
+
+      return _board;
+      // end of function fProcessBoardGenus(...)
+    };
+    const fEnergize = (arg_Random)=> {
+      let _tilesValues = [];
+      for (_i = 0; _i < tiles_count - 1; _i++ ) {
+        _tilesValues[_i] = _i + 1;
+      };
+
+      if (arg_Random) {
+        tiles_values = [];
+        while (_tilesValues.length > 0) {
+          _i = Math.floor(Math.random() * _tilesValues.length);
+          tiles_values.push(_tilesValues.splice(_i, 1)[0]);
+        };// end of while(...)
+      }
+      else { tiles_values = _tilesValues; };
+
+      let _invCount = 0;
+      for (_i = 0; _i < tiles_count - 2; _i++) {
+        for(_j = _i + 1; _j < tiles_count - 1; _j++) {
+          if (tiles_values[_i] > tiles_values[_j]) { _invCount += 1; };
+        };
+      };
+      // fLog(_invCount);
+      if (_invCount % 2 == 0) { return; };// this is to check that our puzzle can be solved
+
+      fEnergize(arg_Random);
+      // end of function fEnergize(...)
+    };
+    const fActivateBoard = (arg_Random)=> {
+
+      _board = fProcessBoardGenus();// sets _board.innerHTML = '', (sets the content of board to be empty)
+      is_board_completed = [];
+      tiles = [];
+      fEnergize(arg_Random);// sets tiles_values = [], before filling them in
+
+      let _index = 0;
+      for (_x=0; _x < tiles_x_count; _x++) {
+        for (_y=0; _y < tiles_y_count; _y++) {
+          _tileFrame = document.createElement("div");
+          _tileFrame.id = TILE_FRAME_ +SEP+ _x.toString() +SEP+ _y.toString() +SEP+ (_index + 1).toString();
+          _tileFrame.classList.add("tile-frame");
+          if(IS_Draggable) {
+            _tileFrame.addEventListener('dragover', fDragOver);
+            _tileFrame.addEventListener('drop', fDrop);
+          };
+          if(IS_Clickable) {
+            _tileFrame.addEventListener('click', fTileFrameClick);
+          };
+
+          if ((_x == (tiles_x_count-1)) && (_y == (tiles_y_count-1))) {
+            _board.appendChild(_tileFrame);
+            continue;
+          };// end of if
+
+          _tile = document.createElement("div");
+          _tile.id = TILE_ +SEP+ tiles_values[_index].toString();
+          _tile.classList.add("tile");
+          _tile.innerText = tiles_values[_index++];//increment _index when it is called the last time
+
+          if(IS_Draggable) {
+            _tile.addEventListener('dragstart', fDragStart);
+          };
+          if(IS_Clickable){
+            _tile.setAttribute('marked', FALSE);
+            _tile.addEventListener('click', fTileClick);
+          };
+
+          _tileFrame.appendChild(_tile);
+          _board.appendChild(_tileFrame);
+
+          tiles.push(_tile);
+          is_board_completed.push(fEvaluate(_tile));
+        };// end of for _y
+      };// end of for _x
+      moves_counter = new MovesCounter(arg_Random);
+      time_buttler = new TimeButtler();
+      if (arg_Random) { fIsBoardCompleted(); };
+    };
+    const fChangeBoard = (arg_Switch, arg_BoardGenus)=> {
+
+      if (isNaN(arg_BoardGenus)) { return; };
+
+      if (arg_BoardGenus == 0) {
+        arg_Switch.addEventListener('click', ()=> fActivateBoard(true));
+        return;
+      };
+
+      arg_Switch.addEventListener('click', ()=> {
+        const _root = document.querySelector(':root');
+        _root.style.setProperty('--board-genus', arg_BoardGenus);
+        fActivateBoard(true);
+      });
+      // end of function fChangeBoard(...)
+    };
+
+    const fChangeUserScale = (arg_Switch, arg_Way, arg_Inc)=> {
+
+      if (isNaN(arg_Inc)) { return; };
+
+      if (arg_Way === 'p' || arg_Way === 'n') {
+        arg_Switch.addEventListener('click', ()=> {
+          const _root = document.querySelector(':root');
+          let _userScale = Number(getComputedStyle(_root).getPropertyValue('--user-scale'));
+
+          _userScale += (arg_Way === 'p')? arg_Inc : (-arg_Inc);
+          if (_userScale > user_scale_max[0]) { _userScale = user_scale_max[0]; };
+          if (_userScale < user_scale_min[0]) { _userScale = user_scale_min[0]; };
+          _root.style.setProperty('--user-scale', _userScale);
+        });
+      };// end if
+      // end of function fChangeUserScale(...)
+    };
+
+    const fEvaluate = (arg_Tile)=> {
+
+      let _res = arg_Tile.parentNode.id.split(SEP);
+      let _x = Number(_res[1]);
+      let _y = Number(_res[2]);
+      let _tileFrameValue = Number(_res[3]);
+
+      _res = empty_tile_frame_id.split(SEP);
+      let _x0 = Number(_res[1]);
+      let _y0 = Number(_res[2]);
+
+      let _dx = Math.abs(_x - _x0);
+      let _dy = Math.abs(_y - _y0);
+
+      if (IS_Draggable) {
+        if ((_dx + _dy) == 1) { arg_Tile.draggable = true; }
+        else { arg_Tile.draggable = false; };
+      }
+      if (IS_Clickable) {
+        if ((_dx + _dy) == 1) { arg_Tile.setAttribute('clickable', TRUE); }
+        else { arg_Tile.setAttribute('clickable', FALSE); };
+      }
+
+      let _tileValue = arg_Tile.id.split(SEP)[1];
+      return (_tileValue == _tileFrameValue);
+      // end of function fEvaluate(...)
+    };
+    const fIsBoardCompleted = ()=> {
+
+      const _count = is_board_completed.length;
+      // fLog(_count);
+      for (_each=0; _each < _count; _each++) {
+        if (!is_board_completed[_each]) { return; };
+      };
+
+      tiles.forEach(($_Tile) => {
+        if(IS_Draggable) {
+          $_Tile.draggable = false;
+        };
+        if(IS_Clickable) {
+          $_Tile.setAttribute('clickable', FALSE);
+        };
+      });
+
+      modal_classes.forEach(($_Class) => {
+        const _userResultModalGroup = user_result.querySelectorAll('.' + $_Class);
+        _userResultModalGroup.forEach(($_Eleme) => {
+          $_Eleme.remove();
+          // end of forEach
+        });
+        // end of forEach
+      });
+
+      user_result.querySelectorAll('p').forEach(($_P) => {
+        if ($_P.id && $_P.id.split(SEP)[0] === 'modal_hook_' && $_P.id.split(SEP)[1] === '0') {
+          let _ul;
+          _ul = time_buttler.serveFormatted("time-panel", "time-unit");
+          $_P.after(_ul);
+          _ul = moves_counter.serveFormatted("mvs-cntr-panel", "mvs-cntr-unit");
+          $_P.after(_ul);
+          //end if
+        };
+        // end of forEach
+      });
+
+      user_result.style.display = 'block';
+      // end of function fIsBoardCompleted(...)
+    };
+
+  </script>
+
+</head>
+<body onload='fOnBodyLoad();'>
+
+  <div id="user_result" class="modal">
+    <div>
+      <h1>Congrats!</h1>
+  	  <p id='modal_hook_-0'>You solved this puzzle.</p>
+
+      <button type="button" class="modal-button modal-ok-button">Ok</button>
+  	  <p style="clear:left;"></p>
+  	</div>
+  </div>
+
+  <div id="user_help" class="modal">
+    <div>
+      <h1>Help</h1>
+      <dl>
+        <dt>click <span>New Puzzle</span></dt>
+          <dd>to reshuffle and generate a new puzzle.</dd>
+        <dt>click <span>Change Board</span></dt>
+          <dd>to change the number of tiles on the board.</dd>
+        <dt>click <span>-)||(-</span>, or <span>(-||-)</span></dt>
+          <dd>to reduce, or increase the puzzle area (to better fit your screen).</dd>
+        <dt class='when_draggable'>click <span>Left Mouse</span> and hold it down, or on mobile devices use <span>long press</span></dt>
+          <dd class='when_draggable'>to grab and drag the tiles adjacent to the empty square.</dd>
+          <dd class='when_draggable'>Drop the selected tile to empty squre. Shuffle all tiles to complete the puzzle.</dd>
+        <dt class='when_clickable'>click <span>Left Mouse</span> on the tile, or on mobile devices <span>touch</span> the tile</dt>
+          <dd class='when_clickable'>that you wish to move. The tile will change its color.</dd>
+          <dd class='when_clickable'>Click on/touch the empty square to have the selected tile jump there.</dd>
+          <dd class='when_clickable'>Shuffle all tiles to complete the puzzle.</dd>
+      </dl>
+
+      <button type="button" class="modal-button modal-yes-button">see example of a completed puzzle</button>
+      <button type="button" class="modal-button modal-ok-button">Ok</button>
+  	  <p style="clear:left;"></p>
+    </div>
+  </div>
+
+  <ul class='cntrl-panel'>
+    <li><span id="user_scale_-n-0.05" class="cntrl-switch user-scale">-)||(-</span></li>
+    <li><span id='new_game_-0-0' class="cntrl-switch">New Puzzle</span></li>
+    <li><span id="user_help_" class="cntrl-switch">Help</span></li>
+    <li class="cntrl-block">
+      Change Board
+      <div class="cntrl-block-board">
+        <span id='board_-3-3' class="cntrl-switch">3x3</span>
+        <span id='board_-4-4' class="cntrl-switch">4x4</span>
+        <span id='board_-5-5' class="cntrl-switch">5x5</span>
+        <span id='board_-6-6' class="cntrl-switch">6x6</span>
+        <span id='board_-7-7' class="cntrl-switch">7x7</span>
+        <span id='board_-8-8' class="cntrl-switch">8x8</span>
+        <span id='board_-9-9' class="cntrl-switch">9x9</span>
+        <span id='board_-10-10' class="cntrl-switch">10x10</span>
+        <span id='board_-11-11' class="cntrl-switch">11x11</span>
+        <span id='board_-12-12' class="cntrl-switch">12x12</span>
+        <span id='board_-13-13' class="cntrl-switch">13x13</span>
+        <span id='board_-14-14' class="cntrl-switch">14x14</span>
+      </div>
+    </li>
+    <li><span id="user_scale_-p-0.05" class="cntrl-switch user-scale">(-||-)</span></li>
+  </ul>
+
+  <div class="board">
+  </div>
+
+</body>
+</html>
